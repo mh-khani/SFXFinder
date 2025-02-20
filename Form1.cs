@@ -1,9 +1,11 @@
 ﻿using NAudio.Wave;
+using System.Diagnostics;
+using System.Windows.Forms;
+
 namespace SFXFinder
 {
     /// <summary>
-    ///  1-درست کردن راست کلیک باز شدن دایرگتوری
-    ///  فیلتر فرمت
+    ///  
     ///  بهینه سازی رابط کابری
     ///  make it english all th app
     ///  خروجی exe
@@ -11,19 +13,18 @@ namespace SFXFinder
     /// </summary>
     public partial class Form1 : Form
     {
-        public static string path = "I:\\Soft Saaz\\8_more\\Sound Effect\\#game\\sounds\\SuperMario";
+        private string path = null;
         private IWavePlayer wavePlayer;
         private AudioFileReader audioFileReader;
         private List<string> Formats = new List<string>();
 
+        private bool BNameChecked = true;
+
         public Form1()
         {
             InitializeComponent();
-            Formats.Add("mp3");
-            Formats.Add("wav");
-            Formats.Add("obb");
-        }
 
+        }
         private void Form1_Load(object sender, EventArgs e)
         {
             sfxlist.View = View.Details;
@@ -31,6 +32,11 @@ namespace SFXFinder
             sfxlist.Columns.Add("Play", 150);
             sfxlist.Columns.Add("Size", 100);
             sfxlist.FullRowSelect = true;
+
+            for (int i = 0; i < filterList.Items.Count; i++)
+            {
+                filterList.SetItemChecked(i, true);
+            }
         }
 
         #region ---- Event ----
@@ -48,18 +54,66 @@ namespace SFXFinder
         {
             Search(sender, e);
         }
-
-        private void FileBrowse_TextChanged(object sender, EventArgs e) // Path TexBox
-        {
-
-        }
         private void Name_beautification_CheckedChanged(object sender, EventArgs e)
         {
-
+            BNameChecked = !BNameChecked;
+            if (path != null)
+                SFXListInitialize();
         }
-        private void filterList_SelectedIndexChanged(object sender, EventArgs e) // change filter option
+        private void sfxlist_MouseClick(object sender, MouseEventArgs e) // play sound effect when user clicked --- List View
         {
+            if (sfxlist.SelectedItems.Count > 0 && path != null)
+            {
+                var subItem = sfxlist.HitTest(e.Location).SubItem;
+                if (subItem != null)
+                {
+                    string filePath = sfxlist.SelectedItems[0].Tag.ToString();
 
+                    PlaySound(filePath);
+                }
+            }
+        }
+        private void sfxlist_MouseDoubleClick(object sender, MouseEventArgs e) // List View - open Diecrtoey
+        {
+            if (sfxlist.SelectedItems.Count > 0 && path != null)
+            {
+                string filePath = sfxlist.SelectedItems[0].Tag.ToString();
+
+                if (File.Exists(filePath))
+                {
+                    string folderPath = Path.GetDirectoryName(filePath);
+
+                    try
+                    {
+                        Process.Start("explorer.exe", $"/select, \"{filePath}\"");
+                    }
+                    catch
+                    {
+                        MessageBox.Show("Error in opening File Explorer!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("choosen File doesn't exist!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            else
+            {
+                MessageBox.Show("Select Somthing.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+        private void filterList_ItemCheck(object sender, ItemCheckEventArgs e) // change Filter List
+        {
+            string selectedItem = filterList.Items[e.Index].ToString();
+
+            if (e.NewValue == CheckState.Checked)
+            {
+                Formats.Add(selectedItem);
+            }
+            else
+            {
+                Formats.Remove(selectedItem);
+            }
         }
         #endregion
         #region ---- Sound ----
@@ -67,7 +121,6 @@ namespace SFXFinder
         {
             try
             {
-                // اگر صدای قبلی در حال پخش است آن را متوقف کن
                 wavePlayer?.Stop();
                 wavePlayer?.Dispose();
                 audioFileReader?.Dispose();
@@ -79,7 +132,7 @@ namespace SFXFinder
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"خطا در پخش صدا: {ex.Message}");
+                MessageBox.Show($"Error in playing Sound: {ex.Message}");
             }
         } //main Function
         private void stop_Click(object sender, EventArgs e)
@@ -97,42 +150,33 @@ namespace SFXFinder
                 Console.WriteLine("Nothing");
             }
         } //bt
-        private void sfxlist_MouseClick(object sender, MouseEventArgs e) // play sound effect when user clicked
-        {
-            if (sfxlist.SelectedItems.Count > 0)
-            {
-                var subItem = sfxlist.HitTest(e.Location).SubItem;
-                if (subItem != null)
-                {
-                    string filePath = sfxlist.SelectedItems[0].Tag.ToString();
-
-                    PlaySound(filePath);
-                }
-            }
-        }
-
         #endregion
         private void SFXListInitialize()
         {
             string selectedPath = path;
             sfxlist.Items.Clear();
 
-            // جستجوی فایل‌های صوتی
+            // search sfx
             string[] soundFiles = Directory.GetFiles(selectedPath, "*.*", SearchOption.AllDirectories)
-                                            .Where(f => f.EndsWith(".wav") || f.EndsWith(".mp3"))
+                                            .Where(file => Formats.Any(format => file.EndsWith(format, StringComparison.OrdinalIgnoreCase)))
                                             .ToArray();
 
             if (soundFiles.Length == 0)
             {
-                MessageBox.Show("هیچ ساند افکتی پیدا نشد.");
+                MessageBox.Show("Couldn't Find anythink🙁");
             }
             else
             {
                 foreach (string file in soundFiles)
                 {
                     var fileName = Path.GetFileNameWithoutExtension(file);
-                    fileName = FormatFileName(fileName); // پردازش نام فایل
-                    fileName += Path.GetExtension(file); // الحاق پسوند فایل
+                    if (BNameChecked)
+                    {
+                        fileName = FormatFileName(fileName); // file name
+
+                    }
+                    fileName += Path.GetExtension(file);
+
                     var fileSize = GetFormattedFileSize(file);
                     var item = new ListViewItem(Path.GetFileName(fileName));
                     item.Tag = file;
@@ -151,9 +195,12 @@ namespace SFXFinder
 
             try
             {
+                // search code ---
                 var files = Directory.GetFiles(path, "*.*", SearchOption.AllDirectories)
-                                      .Where(file => (selectedFormat == "All" || file.ToLower().EndsWith(selectedFormat)) &&
-                                                     FileMatchesSearch(file, searchText)).ToList();
+                                       .Where(file => Formats.Any(format => file.EndsWith(format, StringComparison.OrdinalIgnoreCase))
+                                       &&
+                                        FileMatchesSearch(file, searchText))
+                                       .ToList();
 
                 if (files.Count == 0)
                 {
@@ -162,7 +209,15 @@ namespace SFXFinder
                 }
                 foreach (string file in files)
                 {
-                    var fileName = FormatFileName(Path.GetFileNameWithoutExtension(file)) + Path.GetExtension(file);
+                    var fileName = "";
+                    if (BNameChecked)
+                    {
+                        fileName = FormatFileName(Path.GetFileNameWithoutExtension(file)) + Path.GetExtension(file);
+                    }
+                    else
+                    {
+                        fileName = Path.GetFileNameWithoutExtension(file) + Path.GetExtension(file);
+                    }
                     var fileSize = $"{new FileInfo(file).Length / 1024} KB";
                     var item = new ListViewItem(fileName);
                     item.Tag = file;
@@ -193,16 +248,14 @@ namespace SFXFinder
             if (sizeInBytes >= 1024 * 1024)
                 return $"{(sizeInBytes / (1024.0 * 1024.0)):0.00} MB";
             else if (sizeInBytes >= 1024)
-                return $"{sizeInBytes / 1024} KB"; // حذف اعشار
+                return $"{sizeInBytes / 1024} KB";
             else
                 return $"{sizeInBytes} Bytes";
-        } // Beautifulize SFX Names
+        }
         private bool FileMatchesSearch(string filePath, string searchText)
         {
             var fileName = Path.GetFileNameWithoutExtension(filePath).ToLower();
             return string.IsNullOrEmpty(searchText) || fileName.Contains(searchText);
         }
-
-
     }
 }

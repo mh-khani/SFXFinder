@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            components = new System.ComponentModel.Container();
             ListViewItem listViewItem1 = new ListViewItem("");
             ListViewItem listViewItem2 = new ListViewItem("");
             ListViewItem listViewItem3 = new ListViewItem("");
@@ -41,7 +40,6 @@
             browse = new Button();
             FileBrowse = new TextBox();
             MusicPath = new FolderBrowserDialog();
-            imageList1 = new ImageList(components);
             stop = new Button();
             play = new Button();
             filterList = new CheckedListBox();
@@ -84,6 +82,7 @@
             sfxlist.UseCompatibleStateImageBehavior = false;
             sfxlist.View = View.Details;
             sfxlist.MouseClick += sfxlist_MouseClick;
+            sfxlist.MouseDoubleClick += sfxlist_MouseDoubleClick;
             // 
             // browse
             // 
@@ -107,17 +106,10 @@
             FileBrowse.Size = new Size(445, 23);
             FileBrowse.TabIndex = 5;
             FileBrowse.Text = "C:\\";
-            FileBrowse.TextChanged += FileBrowse_TextChanged;
             // 
             // MusicPath
             // 
             MusicPath.Description = "Open Your Music Library Path";
-            // 
-            // imageList1
-            // 
-            imageList1.ColorDepth = ColorDepth.Depth8Bit;
-            imageList1.ImageSize = new Size(16, 16);
-            imageList1.TransparentColor = Color.Transparent;
             // 
             // stop
             // 
@@ -152,7 +144,7 @@
             filterList.Name = "filterList";
             filterList.Size = new Size(58, 54);
             filterList.TabIndex = 15;
-            filterList.SelectedIndexChanged += filterList_SelectedIndexChanged;
+            filterList.ItemCheck += filterList_ItemCheck;
             // 
             // Name_beautification
             // 
@@ -217,7 +209,6 @@
         private Button browse;
         private TextBox FileBrowse;
         private FolderBrowserDialog MusicPath;
-        private ImageList imageList1;
         private Button stop;
         private Button play;
         private CheckedListBox filterList;
