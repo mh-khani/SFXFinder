@@ -1,4 +1,5 @@
-🚀 SFX Finder - The Ultimate Sound Effect Organizer! 🎵🔍
+# 🚀 SFX Finder - The Ultimate Sound Effect Organizer! 🎵🔍
+
 Are you tired of searching through endless folders to find the perfect sound effect? SFX Finder is here to save the day! 🎧✨
 
 🔹 What is SFX Finder?
