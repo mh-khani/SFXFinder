@@ -6,9 +6,22 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <Authors>$(MH_Khani)</Authors>
+    <Company>$(MHK)</Company>
+    <Product>$(SFX Finder)</Product>
+    <PackageIcon>volume-icon-19450.png</PackageIcon>
+    <RepositoryUrl>https://github.com/mh-khani/SFXFinder</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="C:\Users\Hossien\Downloads\volume-icon-19450.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="9.0.3" />
     <PackageReference Include="NAudio" Version="2.2.1" />
   </ItemGroup>
 

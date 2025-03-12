@@ -45,7 +45,6 @@
             filterList = new CheckedListBox();
             Name_beautification = new CheckBox();
             label3 = new Label();
-            label4 = new Label();
             progressBar1 = new ProgressBar();
             SuspendLayout();
             // 
@@ -171,15 +170,6 @@
             label3.TabIndex = 18;
             label3.Text = "Filter";
             // 
-            // label4
-            // 
-            label4.AutoSize = true;
-            label4.Location = new Point(336, 66);
-            label4.Name = "label4";
-            label4.Size = new Size(83, 15);
-            label4.TabIndex = 19;
-            label4.Text = "made by MHK";
-            // 
             // progressBar1
             // 
             progressBar1.ForeColor = SystemColors.ControlDarkDark;
@@ -196,7 +186,6 @@
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(614, 541);
             Controls.Add(progressBar1);
-            Controls.Add(label4);
             Controls.Add(label3);
             Controls.Add(Name_beautification);
             Controls.Add(filterList);
@@ -228,7 +217,6 @@
         private CheckedListBox filterList;
         private CheckBox Name_beautification;
         private Label label3;
-        private Label label4;
         private ProgressBar progressBar1;
     }
 }

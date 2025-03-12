@@ -1,6 +1,5 @@
 ﻿using NAudio.Wave;
 using System.Diagnostics;
-using System.Windows.Forms;
 
 
 namespace SFXFinder
@@ -218,38 +217,56 @@ namespace SFXFinder
                 progressBar1.Visible = false;
             }
         }
-        private void Search(object sender, EventArgs e)
+        private async Task Search(object sender, EventArgs e)
         {
             string searchText = searchBox.Text.Trim().ToLower();
             string selectedFormat = searchBox.SelectedText?.ToString() ?? "All";
 
             sfxlist.Items.Clear();
+            progressBar1.Value = 0;
+            progressBar1.Visible = true;
 
             try
             {
-                // search code ---
-                var files = Directory.GetFiles(path, "*.*", SearchOption.AllDirectories)
-                                       .Where(file => Formats.Any(format => file.EndsWith(format, StringComparison.OrdinalIgnoreCase))
-                                       &&
-                                        FileMatchesSearch(file, searchText))
-                                       .ToList();
+                // Get all files in the directory
+                var allFiles = Directory.GetFiles(path, "*.*", SearchOption.AllDirectories);
+                int totalFiles = allFiles.Length;
+                int processedFiles = 0;
 
+                // Run filtering in a separate task to avoid freezing the UI
+                var files = await Task.Run(() =>
+                {
+                    return allFiles.Where(file =>
+                    {
+                        bool matches = Formats.Any(format => file.EndsWith(format, StringComparison.OrdinalIgnoreCase)) &&
+                                       FileMatchesSearch(file, searchText);
+
+                        Interlocked.Increment(ref processedFiles); // Ensure thread safety
+
+                        // Update ProgressBar on UI thread
+                        this.Invoke(new Action(() =>
+                        {
+                            progressBar1.Value = (int)((processedFiles / (double)totalFiles) * 100);
+                        }));
+
+                        return matches;
+                    }).ToList();
+                });
+
+                // If no matching files are found, show a message
                 if (files.Count == 0)
                 {
                     MessageBox.Show("No matching files found", "Error In Search", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
+
+                // Add found files to the list
                 foreach (string file in files)
                 {
-                    var fileName = "";
-                    if (BNameChecked)
-                    {
-                        fileName = FormatFileName(Path.GetFileNameWithoutExtension(file)) + Path.GetExtension(file);
-                    }
-                    else
-                    {
-                        fileName = Path.GetFileNameWithoutExtension(file) + Path.GetExtension(file);
-                    }
+                    var fileName = BNameChecked
+                        ? FormatFileName(Path.GetFileNameWithoutExtension(file)) + Path.GetExtension(file)
+                        : Path.GetFileNameWithoutExtension(file) + Path.GetExtension(file);
+
                     var fileSize = $"{new FileInfo(file).Length / 1024} KB";
                     var item = new ListViewItem(fileName);
                     item.Tag = file;
@@ -260,7 +277,13 @@ namespace SFXFinder
             }
             catch (Exception ex)
             {
+                // Show error message if an exception occurs
                 MessageBox.Show($"An error has occurred: {ex.Message}");
+            }
+            finally
+            {
+                // Hide progress bar when search is finished
+                progressBar1.Visible = false;
             }
         }
         private string FormatFileName(string fileName)
