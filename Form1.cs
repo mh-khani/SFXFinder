@@ -2,15 +2,21 @@
 using System.Diagnostics;
 using System.Windows.Forms;
 
+
 namespace SFXFinder
 {
     /// <summary>
-    ///  
-    ///  بهینه سازی رابط کابری
-    ///  make it english all th app
+    ///  improve speed of load
+    ///  make it responsive
+    ///  ui better
+    ///  load bar *
+    ///  change double click to enter
+    ///  add search btn
     ///  خروجی exe
-    ///  
     /// </summary>
+    /// next features:
+    ///  - Like List
+    ///  - Tags
     public partial class Form1 : Form
     {
         private string path = null;
@@ -28,9 +34,9 @@ namespace SFXFinder
         private void Form1_Load(object sender, EventArgs e)
         {
             sfxlist.View = View.Details;
-            sfxlist.Columns.Add("SFX Name", 350);
+            sfxlist.Columns.Add("SFX Name", 350, HorizontalAlignment.Center);
             sfxlist.Columns.Add("Play", 150);
-            sfxlist.Columns.Add("Size", 100);
+            sfxlist.Columns.Add("Size", 120);
             sfxlist.FullRowSelect = true;
 
             for (int i = 0; i < filterList.Items.Count; i++)
@@ -44,10 +50,8 @@ namespace SFXFinder
         {
             if (MusicPath.ShowDialog() == DialogResult.OK)
             {
-                FileBrowse.Text = MusicPath.SelectedPath.ToString();
                 path = MusicPath.SelectedPath;
                 SFXListInitialize();
-                FileBrowse.Text = path.ToString();
             }
         }
         private void searchBox_TextChanged(object sender, EventArgs e) // Search TextBox
@@ -151,39 +155,67 @@ namespace SFXFinder
             }
         } //bt
         #endregion
-        private void SFXListInitialize()
+        private async void SFXListInitialize()
         {
             string selectedPath = path;
             sfxlist.Items.Clear();
+            progressBar1.Value = 0;
+            progressBar1.Visible = true;
 
-            // search sfx
-            string[] soundFiles = Directory.GetFiles(selectedPath, "*.*", SearchOption.AllDirectories)
-                                            .Where(file => Formats.Any(format => file.EndsWith(format, StringComparison.OrdinalIgnoreCase)))
-                                            .ToArray();
+            try
+            {
+                var allFiles = Directory.GetFiles(selectedPath, "*.*", SearchOption.AllDirectories);
+                int totalFiles = allFiles.Length;
+                int processedFiles = 0;
 
-            if (soundFiles.Length == 0)
-            {
-                MessageBox.Show("Couldn't Find anythink🙁");
-            }
-            else
-            {
-                foreach (string file in soundFiles)
+                var soundFiles = await Task.Run(() =>
                 {
-                    var fileName = Path.GetFileNameWithoutExtension(file);
-                    if (BNameChecked)
+                    return allFiles.Where(file =>
                     {
-                        fileName = FormatFileName(fileName); // file name
+                        bool matches = Formats.Any(format => file.EndsWith(format, StringComparison.OrdinalIgnoreCase));
+                        processedFiles++;
 
-                    }
-                    fileName += Path.GetExtension(file);
+                        // بروزرسانی ProgressBar در UI Thread
+                        this.Invoke(new Action(() =>
+                        {
+                            progressBar1.Value = (int)((processedFiles / (double)totalFiles) * 100);
+                        }));
 
-                    var fileSize = GetFormattedFileSize(file);
-                    var item = new ListViewItem(Path.GetFileName(fileName));
-                    item.Tag = file;
-                    item.SubItems.Add("🔊 Click To Play");
-                    item.SubItems.Add(fileSize);
-                    sfxlist.Items.Add(item);
+                        return matches;
+                    }).ToArray();
+                });
+
+                if (soundFiles.Length == 0)
+                {
+                    MessageBox.Show("Couldn't Find anything 🙁");
                 }
+                else
+                {
+                    foreach (string file in soundFiles)
+                    {
+                        var fileName = Path.GetFileNameWithoutExtension(file);
+                        if (BNameChecked)
+                        {
+                            fileName = FormatFileName(fileName); // اصلاح نام فایل
+                        }
+                        fileName += Path.GetExtension(file);
+
+                        var fileSize = GetFormattedFileSize(file);
+                        var item = new ListViewItem(Path.GetFileName(fileName));
+                        item.Tag = file;
+                        item.SubItems.Add("🔊 Click To Play");
+                        item.SubItems.Add(fileSize);
+                        sfxlist.Items.Add(item);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error has occurred: {ex.Message}");
+            }
+            finally
+            {
+                progressBar1.Visible = false;
             }
         }
         private void Search(object sender, EventArgs e)
@@ -231,7 +263,6 @@ namespace SFXFinder
                 MessageBox.Show($"An error has occurred: {ex.Message}");
             }
         }
-
         private string FormatFileName(string fileName)
         {
             fileName = fileName.Replace("_", " ");
