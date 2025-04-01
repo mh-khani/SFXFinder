@@ -1,17 +1,11 @@
 ﻿using NAudio.Wave;
 using System.Diagnostics;
 
-
 namespace SFXFinder
 {
     /// <summary>
     ///  improve speed of load
-    ///  make it responsive
-    ///  ui better
-    ///  load bar *
-    ///  change double click to enter
-    ///  add search btn
-    ///  خروجی exe
+    ///  sEARCHING OMPROVE 
     /// </summary>
     /// next features:
     ///  - Like List
@@ -25,15 +19,16 @@ namespace SFXFinder
 
         private bool BNameChecked = true;
 
+        private System.Windows.Forms.Timer searchTimer;
+
         public Form1()
         {
             InitializeComponent();
-
         }
         private void Form1_Load(object sender, EventArgs e)
         {
             sfxlist.View = View.Details;
-            sfxlist.Columns.Add("SFX Name", 350, HorizontalAlignment.Center);
+            sfxlist.Columns.Add("SFX Name", 350);
             sfxlist.Columns.Add("Play", 150);
             sfxlist.Columns.Add("Size", 120);
             sfxlist.FullRowSelect = true;
@@ -42,6 +37,11 @@ namespace SFXFinder
             {
                 filterList.SetItemChecked(i, true);
             }
+
+            // Initialize Timer
+            searchTimer = new System.Windows.Forms.Timer();
+            searchTimer.Interval = 800;
+            searchTimer.Tick += SearchTimer_Tick;
         }
 
         #region ---- Event ----
@@ -55,7 +55,8 @@ namespace SFXFinder
         }
         private void searchBox_TextChanged(object sender, EventArgs e) // Search TextBox
         {
-            Search(sender, e);
+            searchTimer.Stop();
+            searchTimer.Start();
         }
         private void Name_beautification_CheckedChanged(object sender, EventArgs e)
         {
@@ -219,6 +220,7 @@ namespace SFXFinder
         }
         private async Task Search(object sender, EventArgs e)
         {
+            // Stop Timer
             string searchText = searchBox.Text.Trim().ToLower();
             string selectedFormat = searchBox.SelectedText?.ToString() ?? "All";
 
@@ -244,7 +246,7 @@ namespace SFXFinder
                         Interlocked.Increment(ref processedFiles); // Ensure thread safety
 
                         // Update ProgressBar on UI thread
-                        this.Invoke(new Action(() =>
+                        Invoke(new Action(() =>
                         {
                             progressBar1.Value = (int)((processedFiles / (double)totalFiles) * 100);
                         }));
@@ -310,6 +312,13 @@ namespace SFXFinder
         {
             var fileName = Path.GetFileNameWithoutExtension(filePath).ToLower();
             return string.IsNullOrEmpty(searchText) || fileName.Contains(searchText);
+        }
+ 
+        // when Timer is Done Run Search Process
+        private void SearchTimer_Tick(object sender, EventArgs e)
+        {
+            searchTimer.Stop();
+            Search(sender, e);
         }
     }
 }

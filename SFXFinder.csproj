@@ -1,8 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net7.0-windows</TargetFramework>
+    <TargetFramework>net9.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -11,20 +10,18 @@
     <Product>$(SFX Finder)</Product>
     <PackageIcon>volume-icon-19450.png</PackageIcon>
     <RepositoryUrl>https://github.com/mh-khani/SFXFinder</RepositoryUrl>
+    <ApplicationIcon>D:\Programming\SFXFinder\SFXFinder\Resources\volume-icon-19450.ico</ApplicationIcon>
   </PropertyGroup>
-
   <ItemGroup>
     <None Include="C:\Users\Hossien\Downloads\volume-icon-19450.png">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="9.0.3" />
     <PackageReference Include="NAudio" Version="2.2.1" />
   </ItemGroup>
-
   <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">
       <DesignTime>True</DesignTime>
@@ -32,12 +29,10 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
   </ItemGroup>
-
   <ItemGroup>
     <EmbeddedResource Update="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
-
 </Project>

@@ -50,18 +50,17 @@
             // 
             // searchBox
             // 
-            searchBox.Anchor = AnchorStyles.Left;
             searchBox.Location = new Point(68, 17);
             searchBox.MinimumSize = new Size(208, 23);
             searchBox.Name = "searchBox";
-            searchBox.Size = new Size(248, 23);
+            searchBox.Size = new Size(265, 23);
             searchBox.TabIndex = 0;
             searchBox.TextChanged += searchBox_TextChanged;
             // 
             // label1
             // 
             label1.AutoSize = true;
-            label1.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
+            label1.Font = new Font("Segoe UI", 10F);
             label1.ForeColor = Color.Black;
             label1.Location = new Point(12, 18);
             label1.Name = "label1";
@@ -71,8 +70,8 @@
             // 
             // sfxlist
             // 
+            sfxlist.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             sfxlist.BorderStyle = BorderStyle.None;
-            sfxlist.Dock = DockStyle.Bottom;
             sfxlist.ForeColor = SystemColors.Desktop;
             sfxlist.FullRowSelect = true;
             sfxlist.GridLines = true;
@@ -85,7 +84,7 @@
             sfxlist.Items.AddRange(new ListViewItem[] { listViewItem1, listViewItem2, listViewItem3, listViewItem4, listViewItem5, listViewItem6 });
             sfxlist.Location = new Point(0, 103);
             sfxlist.Name = "sfxlist";
-            sfxlist.Size = new Size(614, 438);
+            sfxlist.Size = new Size(622, 438);
             sfxlist.TabIndex = 3;
             sfxlist.UseCompatibleStateImageBehavior = false;
             sfxlist.View = View.Details;
@@ -96,11 +95,11 @@
             // 
             browse.BackColor = Color.FloralWhite;
             browse.FlatAppearance.BorderColor = SystemColors.ActiveCaption;
-            browse.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            browse.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             browse.ForeColor = Color.FromArgb(0, 0, 64);
-            browse.Location = new Point(336, 12);
+            browse.Location = new Point(355, 12);
             browse.Name = "browse";
-            browse.Size = new Size(154, 31);
+            browse.Size = new Size(167, 31);
             browse.TabIndex = 4;
             browse.Text = "Open folder";
             browse.UseVisualStyleBackColor = false;
@@ -140,7 +139,7 @@
             filterList.BorderStyle = BorderStyle.None;
             filterList.FormattingEnabled = true;
             filterList.Items.AddRange(new object[] { "mp3", "wav", "ogg" });
-            filterList.Location = new Point(522, 27);
+            filterList.Location = new Point(542, 27);
             filterList.Name = "filterList";
             filterList.Size = new Size(58, 54);
             filterList.TabIndex = 15;
@@ -163,8 +162,8 @@
             // 
             label3.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label3.AutoSize = true;
-            label3.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
-            label3.Location = new Point(522, 9);
+            label3.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            label3.Location = new Point(542, 9);
             label3.Name = "label3";
             label3.Size = new Size(36, 15);
             label3.TabIndex = 18;
@@ -172,10 +171,11 @@
             // 
             // progressBar1
             // 
+            progressBar1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             progressBar1.ForeColor = SystemColors.ControlDarkDark;
             progressBar1.Location = new Point(0, 100);
             progressBar1.Name = "progressBar1";
-            progressBar1.Size = new Size(614, 5);
+            progressBar1.Size = new Size(622, 5);
             progressBar1.Step = 20;
             progressBar1.TabIndex = 20;
             progressBar1.Visible = false;
@@ -184,7 +184,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(614, 541);
+            ClientSize = new Size(622, 541);
             Controls.Add(progressBar1);
             Controls.Add(label3);
             Controls.Add(Name_beautification);
@@ -196,7 +196,6 @@
             Controls.Add(label1);
             Controls.Add(searchBox);
             Icon = (Icon)resources.GetObject("$this.Icon");
-            MaximumSize = new Size(630, 580);
             MinimumSize = new Size(630, 580);
             Name = "Form1";
             Text = "SFX Finder";
