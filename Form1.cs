@@ -1,11 +1,11 @@
 ﻿using NAudio.Wave;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 
 namespace SFXFinder
 {
     /// <summary>
     ///  improve speed of load
-    ///  sEARCHING OMPROVE 
     /// </summary>
     /// next features:
     ///  - Like List
@@ -40,7 +40,7 @@ namespace SFXFinder
 
             // Initialize Timer
             searchTimer = new System.Windows.Forms.Timer();
-            searchTimer.Interval = 800;
+            searchTimer.Interval = 400;
             searchTimer.Tick += SearchTimer_Tick;
         }
 
@@ -49,6 +49,7 @@ namespace SFXFinder
         {
             if (MusicPath.ShowDialog() == DialogResult.OK)
             {
+                searchBox.Text = string.Empty;
                 path = MusicPath.SelectedPath;
                 SFXListInitialize();
             }
@@ -60,6 +61,7 @@ namespace SFXFinder
         }
         private void Name_beautification_CheckedChanged(object sender, EventArgs e)
         {
+            searchBox.Text = string.Empty;
             BNameChecked = !BNameChecked;
             if (path != null)
                 SFXListInitialize();
@@ -168,45 +170,53 @@ namespace SFXFinder
                 int totalFiles = allFiles.Length;
                 int processedFiles = 0;
 
-                var soundFiles = await Task.Run(() =>
+                var progress = new Progress<int>(value =>
                 {
-                    return allFiles.Where(file =>
-                    {
-                        bool matches = Formats.Any(format => file.EndsWith(format, StringComparison.OrdinalIgnoreCase));
-                        processedFiles++;
-
-                        // بروزرسانی ProgressBar در UI Thread
-                        this.Invoke(new Action(() =>
-                        {
-                            progressBar1.Value = (int)((processedFiles / (double)totalFiles) * 100);
-                        }));
-
-                        return matches;
-                    }).ToArray();
+                    progressBar1.Value = value;
                 });
 
-                if (soundFiles.Length == 0)
+                var soundFiles = new ConcurrentBag<string>();
+
+                await Task.Run(() =>
+                {
+                    Parallel.ForEach(allFiles, file =>
+                    {
+                        if (Formats.Any(format => file.EndsWith(format, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            soundFiles.Add(file);
+                        }
+
+                        int percentage = Interlocked.Increment(ref processedFiles) * 100 / totalFiles;
+                        ((IProgress<int>)progress).Report(percentage);
+                    });
+                });
+
+                if (soundFiles.IsEmpty)
                 {
                     MessageBox.Show("Couldn't Find anything 🙁");
                 }
                 else
                 {
+                    sfxlist.BeginUpdate(); // بهینه‌سازی نمایش لیست
                     foreach (string file in soundFiles)
                     {
                         var fileName = Path.GetFileNameWithoutExtension(file);
                         if (BNameChecked)
                         {
-                            fileName = FormatFileName(fileName); // اصلاح نام فایل
+                            fileName = FormatFileName(fileName);
                         }
                         fileName += Path.GetExtension(file);
 
                         var fileSize = GetFormattedFileSize(file);
-                        var item = new ListViewItem(Path.GetFileName(fileName));
-                        item.Tag = file;
+                        var item = new ListViewItem(Path.GetFileName(fileName))
+                        {
+                            Tag = file
+                        };
                         item.SubItems.Add("🔊 Click To Play");
                         item.SubItems.Add(fileSize);
                         sfxlist.Items.Add(item);
                     }
+                    sfxlist.EndUpdate();
                 }
             }
             catch (Exception ex)
@@ -218,9 +228,9 @@ namespace SFXFinder
                 progressBar1.Visible = false;
             }
         }
+
         private async Task Search(object sender, EventArgs e)
         {
-            // Stop Timer
             string searchText = searchBox.Text.Trim().ToLower();
             string selectedFormat = searchBox.SelectedText?.ToString() ?? "All";
 
@@ -230,64 +240,60 @@ namespace SFXFinder
 
             try
             {
-                // Get all files in the directory
                 var allFiles = Directory.GetFiles(path, "*.*", SearchOption.AllDirectories);
                 int totalFiles = allFiles.Length;
                 int processedFiles = 0;
+                var foundFiles = new ConcurrentBag<string>();
+                var progress = new Progress<int>(value => progressBar1.Value = value);
 
-                // Run filtering in a separate task to avoid freezing the UI
-                var files = await Task.Run(() =>
+                await Task.Run(() =>
                 {
-                    return allFiles.Where(file =>
+                    Parallel.ForEach(allFiles, file =>
                     {
-                        bool matches = Formats.Any(format => file.EndsWith(format, StringComparison.OrdinalIgnoreCase)) &&
-                                       FileMatchesSearch(file, searchText);
-
-                        Interlocked.Increment(ref processedFiles); // Ensure thread safety
-
-                        // Update ProgressBar on UI thread
-                        Invoke(new Action(() =>
+                        if (Formats.Any(format => file.EndsWith(format, StringComparison.OrdinalIgnoreCase)) &&
+                            FileMatchesSearch(file, searchText))
                         {
-                            progressBar1.Value = (int)((processedFiles / (double)totalFiles) * 100);
-                        }));
+                            foundFiles.Add(file);
+                        }
 
-                        return matches;
-                    }).ToList();
+                        int progressValue = Interlocked.Increment(ref processedFiles);
+                        (progress as IProgress<int>)?.Report((int)((progressValue / (double)totalFiles) * 100));
+                    });
                 });
 
-                // If no matching files are found, show a message
-                if (files.Count == 0)
+                if (foundFiles.IsEmpty)
                 {
-                    MessageBox.Show("No matching files found", "Error In Search", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("No matching files found", "Error In Search", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
 
-                // Add found files to the list
-                foreach (string file in files)
+                sfxlist.BeginUpdate();
+                foreach (string file in foundFiles)
                 {
                     var fileName = BNameChecked
                         ? FormatFileName(Path.GetFileNameWithoutExtension(file)) + Path.GetExtension(file)
                         : Path.GetFileNameWithoutExtension(file) + Path.GetExtension(file);
 
                     var fileSize = $"{new FileInfo(file).Length / 1024} KB";
-                    var item = new ListViewItem(fileName);
-                    item.Tag = file;
+                    var item = new ListViewItem(fileName) { Tag = file };
                     item.SubItems.Add("🔊 Click To Play");
                     item.SubItems.Add(fileSize);
                     sfxlist.Items.Add(item);
                 }
+                sfxlist.EndUpdate();
             }
             catch (Exception ex)
             {
-                // Show error message if an exception occurs
-                MessageBox.Show($"An error has occurred: {ex.Message}");
+                //  MessageBox.Show($"An error has occurred: {ex.Message}");
+                MessageBox.Show("Press Open Folder button First ",
+                    "No Directory Found",MessageBoxButtons.OK,MessageBoxIcon.Information);
             }
             finally
             {
-                // Hide progress bar when search is finished
                 progressBar1.Visible = false;
             }
         }
+
         private string FormatFileName(string fileName)
         {
             fileName = fileName.Replace("_", " ");
